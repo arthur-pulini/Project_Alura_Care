@@ -2,6 +2,7 @@ import pandas as pd
 from numpy import random
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.dummy import DummyClassifier
 
 SEED = 123143
 random.seed(SEED)
@@ -24,3 +25,10 @@ trainX, testX, trainY, testY = train_test_split(examsValuesV1, diagnosis, test_s
 forestClassifier = RandomForestClassifier(n_estimators = 100)
 forestClassifier.fit(trainX, trainY) #Ajustando o classificador
 print(forestClassifier.score(testX, testY) * 100)
+
+dummyClassifier = DummyClassifier(strategy = "most_frequent")
+dummyClassifier.fit(trainX, trainY)
+print(dummyClassifier.score(testX, testY) * 100)
+#a partir dos resultados, o forestClassifier será usado como baseline para escolher as melhores features
+
+
