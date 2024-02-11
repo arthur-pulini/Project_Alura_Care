@@ -1,8 +1,11 @@
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 from numpy import random
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.dummy import DummyClassifier
+from sklearn.preprocessing import StandardScaler
 
 SEED = 123143
 random.seed(SEED)
@@ -13,13 +16,13 @@ print(datas.isnull().sum())#descobrindo quais colunas passuem valores nulos e qu
 
 #Preparando quais colunas serão utilizadas em x e y
 examsValues = datas.drop(['id', 'diagnostico'], axis=1)
-diagnosis = datas.diagnostico
+diagnostico = datas.diagnostico
 examsValuesV1 = examsValues.drop(['exame_33'], axis=1)
 print(examsValues)
-print(diagnosis)
+print(diagnostico)
 
 #separando entre treino e teste, X e Y
-trainX, testX, trainY, testY = train_test_split(examsValuesV1, diagnosis, test_size=0.3)
+trainX, testX, trainY, testY = train_test_split(examsValuesV1, diagnostico, test_size=0.3)
 
 #instanciando o RandomForestClassifier, usando o numero padrão de árvores
 forestClassifier = RandomForestClassifier(n_estimators = 100)
@@ -31,4 +34,60 @@ dummyClassifier.fit(trainX, trainY)
 print(dummyClassifier.score(testX, testY) * 100)
 #a partir dos resultados, o forestClassifier será usado como baseline para escolher as melhores features
 
+#Normalizando os valores a fim de melhorar a vizualização do gráfico
+standardizer = StandardScaler()
+standardizer.fit(examsValuesV1)
+examsValuesV2 = standardizer.transform(examsValuesV1)
+examsValuesV2 = pd.DataFrame(data = examsValuesV2, columns = examsValuesV1.keys()) #transformando o examsValuesV2 em um Dataframe, o nome das clunas serão iguais os examsValuesV1
+print(examsValuesV2)
 
+def violinGraphic(values, start, end):
+    #fazendo a concatenação e informando que diagnosis é a primeira coluna
+    datasPlot = pd.concat([diagnostico, values.iloc[:, start:end]], axis=1)
+    datasPlot = pd.melt(datasPlot, id_vars="diagnostico", var_name="exams", value_name='valores')
+    #configurando o gráfico de tipo violino
+    plt.figure(figsize=(10, 10))
+    sns.violinplot(x = 'exams', y = 'valores', hue = 'diagnostico', data = datasPlot, split= True)
+    plt.xticks(rotation = 90)
+    plt.show()
+
+#Retirando as colunas que possuem valores constantes, estes vaçores não fornecem informações
+examsValuesV3 = examsValuesV2.drop(['exame_4', 'exame_29'], axis=1)
+print(".")
+print(examsValuesV3)
+
+def classify(values):
+    SEED = 1234
+    random.seed(SEED)
+    trainX, testX, trainY, testY = train_test_split(values, diagnostico, test_size=0.3)
+    forestClassifier = RandomForestClassifier(n_estimators = 100)
+    forestClassifier.fit(trainX, trainY) 
+    print(forestClassifier.score(testX, testY) * 100)
+
+classify(examsValuesV3)
+
+#gerando a correlação entre os exames 
+correlationMatrix = examsValuesV3.corr()
+plt.figure(figsize=(17, 15))
+sns.heatmap(correlationMatrix, annot= True, fmt= ".1f") #com o heat map a visualização fica mais prética
+plt.show()
+
+#pegando os dados da matrix acima de 0.99
+correlationMatrixv1 = correlationMatrix[correlationMatrix > 0.99]
+print(correlationMatrixv1)
+
+#vendo qual coluna possui valores acima de 1, ou seja, colunas que são altamente correlacionadas
+correlationMatrixv2 = correlationMatrixv1.sum()
+print(correlationMatrixv2)
+
+#separando apenas as variaveis altamente correlacionadas
+correlatedVariables = correlationMatrixv2[correlationMatrixv2 > 1]
+print(correlatedVariables)
+
+#retirando as colunas altamente correlacionadas
+examsValuesV4 = examsValuesV3.drop(columns=correlatedVariables.keys())
+classify(examsValuesV4)
+
+#adicionando apenas duas das colunas altamente correlacionadas, pois, a acuracia de examsValuesV4 deu menor que a baseline
+examsValuesV5 = examsValuesV3.drop(columns=['exame_3', 'exame_24'])
+classify(examsValuesV5)
