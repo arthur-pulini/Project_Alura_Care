@@ -6,8 +6,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.dummy import DummyClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import chi2
 
-SEED = 123143
+SEED = 1234
 random.seed(SEED)
 
 datas = pd.read_csv('/home/arthur-pulini/Documentos/Programação/Machine learning Alura/Alura_Care-Exercise/exames.csv')
@@ -70,7 +72,7 @@ classify(examsValuesV3)
 correlationMatrix = examsValuesV3.corr()
 plt.figure(figsize=(17, 15))
 sns.heatmap(correlationMatrix, annot= True, fmt= ".1f") #com o heat map a visualização fica mais prética
-plt.show()
+#plt.show()
 
 #pegando os dados da matrix acima de 0.99
 correlationMatrixv1 = correlationMatrix[correlationMatrix > 0.99]
@@ -91,3 +93,16 @@ classify(examsValuesV4)
 #adicionando apenas duas das colunas altamente correlacionadas, pois, a acuracia de examsValuesV4 deu menor que a baseline
 examsValuesV5 = examsValuesV3.drop(columns=['exame_3', 'exame_24'])
 classify(examsValuesV5)
+
+#selecionando as 5 melhores features com a função chi2
+selectKBest = SelectKBest(chi2, k = 5)
+
+examsValuesV6 = examsValuesV1.drop(columns=['exame_3', 'exame_24', 'exame_4', 'exame_29'])
+trainX, testX, trainY, testY = train_test_split(examsValuesV6, diagnostico, test_size=0.3)
+selectKBest.fit(trainX, trainY)
+trainKBest = selectKBest.transform(trainX)
+testKBest = selectKBest.transform(testX)
+
+classifier = RandomForestClassifier(n_estimators=100, random_state=1234)
+classifier.fit(trainKBest, trainY)
+print(classifier.score(testKBest, testY) * 100)
