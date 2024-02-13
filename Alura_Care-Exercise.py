@@ -186,4 +186,8 @@ tsne = TSNE(n_components=2)
 examsValuesV8 = tsne.fit_transform(examsValuesV5)
 plt.figure(figsize= (14, 8))
 sns.scatterplot(x = examsValuesV8[:,0], y = examsValuesV8[:,1], hue = diagnostico)
-plt.show()
+#plt.show()
+
+#Juntamente com as técnicas de técnicas analíticas de seleção de features(Detecção de valores não preenchidos, valores constantes e correlacionados), 
+#ficou concluído que para este projeto, a melhor técnica de seleção de features automática foi a RFECV, onde por si só escolhe quais e quantas features
+#adquirem o melhor resultado 
