@@ -11,6 +11,8 @@ from sklearn.feature_selection import chi2
 from sklearn.metrics import confusion_matrix
 from sklearn.feature_selection import RFE
 from sklearn.feature_selection import RFECV
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
 
 SEED = 1234
@@ -157,7 +159,7 @@ print(classifier.score(testRfecv, testY) * 100)
 print(rfecvSelector.n_features_)
 print(trainX.columns[rfecvSelector.support_])
 
-#aplicando a matriz de confusão para a seleção RFECV
+#Aplicando a matriz de confusão para a seleção RFECV
 confusionMatrix = confusion_matrix(testY, classifier.predict(testRfecv))
 print(confusionMatrix)
 plt.figure(figsize=(17, 15))
@@ -165,9 +167,23 @@ sns.set()
 sns.heatmap(confusionMatrix, annot= True, fmt= "d").set(xlabel = "Predict", ylabel = "Real")
 #plt.show()
 
-#analisando graficamente o porquê das escolhas do RFECV
+#Analisando graficamente o porquê das escolhas do RFECV
 plt.figure(figsize= (14, 8))
 plt.xlabel("Nº exams")
 plt.ylabel("accuracy")
 plt.plot(range(1, len(rfecvSelector.cv_results_['mean_test_score']) + 1), rfecvSelector.cv_results_['mean_test_score'])
 #plt.show()
+
+#Aplicando técnica de visualização de dados PCA
+pca = PCA(n_components=2)
+examsValuesV7 = pca.fit_transform(examsValuesV5) #foi utilizado o v5, pois os valores estão normalizados
+plt.figure(figsize= (14, 8))
+sns.scatterplot(x = examsValuesV7[:,0], y = examsValuesV7[:,1], hue = diagnostico)
+#plt.show()
+
+#Aplicando técnica de visualização de dados TSNE
+tsne = TSNE(n_components=2)
+examsValuesV8 = tsne.fit_transform(examsValuesV5)
+plt.figure(figsize= (14, 8))
+sns.scatterplot(x = examsValuesV8[:,0], y = examsValuesV8[:,1], hue = diagnostico)
+plt.show()
