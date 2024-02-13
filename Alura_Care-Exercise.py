@@ -8,6 +8,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
+from sklearn.metrics import confusion_matrix
 
 SEED = 1234
 random.seed(SEED)
@@ -98,11 +99,21 @@ classify(examsValuesV5)
 selectKBest = SelectKBest(chi2, k = 5)
 
 examsValuesV6 = examsValuesV1.drop(columns=['exame_3', 'exame_24', 'exame_4', 'exame_29'])
+print(examsValuesV6)
 trainX, testX, trainY, testY = train_test_split(examsValuesV6, diagnostico, test_size=0.3)
 selectKBest.fit(trainX, trainY)
 trainKBest = selectKBest.transform(trainX)
 testKBest = selectKBest.transform(testX)
 
+#medindo a acurácia a partir das 5 features selecionadas pelo SelectKBest
 classifier = RandomForestClassifier(n_estimators=100, random_state=1234)
 classifier.fit(trainKBest, trainY)
 print(classifier.score(testKBest, testY) * 100)
+
+#aplicando a matrix de confusão, a fim de saber se com as features escolhidas o modelo se sai bem
+confusionMatrix = confusion_matrix(testY, classifier.predict(testKBest))
+print(confusionMatrix)
+plt.figure(figsize=(17, 15))
+sns.set()
+sns.heatmap(confusionMatrix, annot= True, fmt= "d").set(xlabel = "Predict", ylabel = "Real")
+#plt.show()
