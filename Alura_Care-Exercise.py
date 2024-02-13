@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 from sklearn.metrics import confusion_matrix
+from sklearn.feature_selection import RFE
 
 SEED = 1234
 random.seed(SEED)
@@ -117,3 +118,30 @@ plt.figure(figsize=(17, 15))
 sns.set()
 sns.heatmap(confusionMatrix, annot= True, fmt= "d").set(xlabel = "Predict", ylabel = "Real")
 #plt.show()
+
+#utilizando o método RFE para fazer a selecão das 5 melhores features
+classifier = RandomForestClassifier(n_estimators=100, random_state=1234)
+classifier.fit(trainX, trainY)
+rfeSelector = RFE(estimator = classifier, n_features_to_select = 5, step = 1)
+rfeSelector.fit(trainX, trainY)
+trainRfe = rfeSelector.transform(trainX)
+testRfe = rfeSelector.transform(testX)
+classifier.fit(trainRfe, trainY)
+print(classifier.score(testRfe, testY) * 100)
+
+
+#aplicando a matriz de confusão para a seleção RFE
+confusionMatrix = confusion_matrix(testY, classifier.predict(testRfe))
+print(confusionMatrix)
+plt.figure(figsize=(17, 15))
+sns.set()
+sns.heatmap(confusionMatrix, annot= True, fmt= "d").set(xlabel = "Predict", ylabel = "Real")
+#plt.show()
+
+#A diferença entre os tipos de selecionadores é que o SelectKBeste irá selecionar as melhores features, 
+#com base no método estatistico escolhido pelo programador, no caso do exercício foi o chi2, já a seleção por RFE, 
+#é uma forma de eliminação de features por recurção, como o próprio nome diz. O RFE faz a acurácia entre cada feature
+#e da uma nota para cada uma, quanto maior a nota, mais relevante ao modelo é a feature.
+
+
+
