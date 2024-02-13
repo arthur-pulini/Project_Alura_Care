@@ -10,6 +10,8 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 from sklearn.metrics import confusion_matrix
 from sklearn.feature_selection import RFE
+from sklearn.feature_selection import RFECV
+
 
 SEED = 1234
 random.seed(SEED)
@@ -143,5 +145,29 @@ sns.heatmap(confusionMatrix, annot= True, fmt= "d").set(xlabel = "Predict", ylab
 #é uma forma de eliminação de features por recurção, como o próprio nome diz. O RFE faz a acurácia entre cada feature
 #e da uma nota para cada uma, quanto maior a nota, mais relevante ao modelo é a feature.
 
+#Aplicando RFECV, técnica de seleção que procura qual o melhor conjunto de features para ser usado
+classifier = RandomForestClassifier(n_estimators=100, random_state=1234)
+classifier.fit(trainX, trainY)
+rfecvSelector = RFECV(estimator = classifier, cv = 5, step = 1, scoring = "accuracy")
+rfecvSelector.fit(trainX, trainY)
+trainRfecv = rfecvSelector.transform(trainX)
+testRfecv = rfecvSelector.transform(testX)
+classifier.fit(trainRfecv, trainY)
+print(classifier.score(testRfecv, testY) * 100)
+print(rfecvSelector.n_features_)
+print(trainX.columns[rfecvSelector.support_])
 
+#aplicando a matriz de confusão para a seleção RFECV
+confusionMatrix = confusion_matrix(testY, classifier.predict(testRfecv))
+print(confusionMatrix)
+plt.figure(figsize=(17, 15))
+sns.set()
+sns.heatmap(confusionMatrix, annot= True, fmt= "d").set(xlabel = "Predict", ylabel = "Real")
+#plt.show()
 
+#analisando graficamente o porquê das escolhas do RFECV
+plt.figure(figsize= (14, 8))
+plt.xlabel("Nº exams")
+plt.ylabel("accuracy")
+plt.plot(range(1, len(rfecvSelector.cv_results_['mean_test_score']) + 1), rfecvSelector.cv_results_['mean_test_score'])
+#plt.show()
